@@ -1,6 +1,5 @@
 import json
 import os
-from server import mcp
 from impala.dbapi import connect
 
 # Helper to get Impala connection details from env vars
@@ -27,7 +26,6 @@ def get_db_connection():
         use_ssl=use_ssl,
     )
 
-@mcp.tool()
 def execute_query(query: str) -> str:
     """
     Execute a SQL query on the Impala database and return results as JSON.
@@ -51,7 +49,6 @@ def execute_query(query: str) -> str:
         if conn:
             conn.close()
 
-@mcp.tool()
 def get_schema() -> str:
     """
     Retrieve the list of table names in the current Impala database.
