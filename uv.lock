@@ -123,18 +123,20 @@ wheels = [
 ]
 
 [[package]]
-name = "iceberg-mcp-server2"
+name = "iceberg-mcp-server"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "impyla" },
     { name = "mcp", extra = ["cli"] },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "impyla", specifier = ">=0.21.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
 ]
 
 [[package]]
