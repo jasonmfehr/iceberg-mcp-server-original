@@ -27,9 +27,6 @@ def get_db_connection():
     )
 
 def execute_query(query: str) -> str:
-    """
-    Execute a SQL query on the Impala database and return results as JSON.
-    """
     conn = None
 
     # Implement rudimentary SQL injection prevention
@@ -59,9 +56,6 @@ def execute_query(query: str) -> str:
             conn.close()
 
 def get_schema() -> str:
-    """
-    Retrieve the list of table names in the current Impala database.
-    """
     conn = None
     try:
         conn = get_db_connection()
