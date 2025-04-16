@@ -32,3 +32,7 @@ To use this server with the Claude Desktop app, add the following configuration 
 ```
 
 Replace `/path/to` with your path to this repository and set the environment variables.
+
+## Usage with AI frameworks
+
+The `./examples` folder contains several examples how to integrate this MCP Server with common AI Frameworks like LangChain/LangGraph, OpenAI SDK. 
