@@ -35,4 +35,7 @@ Replace `/path/to` with your path to this repository and set the environment var
 
 ## Usage with AI frameworks
 
-The `./examples` folder contains several examples how to integrate this MCP Server with common AI Frameworks like LangChain/LangGraph, OpenAI SDK. 
+The `./examples` folder contains several examples how to integrate this MCP Server with common AI Frameworks like LangChain/LangGraph, OpenAI SDK.
+
+
+*Copyright (c) 2025 - Cloudera, Inc. All rights reserved.*
