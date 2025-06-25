@@ -12,6 +12,7 @@ import json
 import os
 from impala.dbapi import connect
 
+
 # Helper to get Impala connection details from env vars
 def get_db_connection():
     host = os.getenv("IMPALA_HOST", "coordinator-default-impala.example.com")
@@ -35,6 +36,7 @@ def get_db_connection():
         http_path=http_path,
         use_ssl=use_ssl,
     )
+
 
 def execute_query(query: str) -> str:
     conn = None
@@ -64,6 +66,7 @@ def execute_query(query: str) -> str:
     finally:
         if conn:
             conn.close()
+
 
 def get_schema() -> str:
     conn = None
