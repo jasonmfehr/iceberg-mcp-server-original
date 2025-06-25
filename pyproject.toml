@@ -9,3 +9,25 @@ dependencies = [
     "mcp[cli]>=1.6.0",
     "python-dotenv>=1.1.0",
 ]
+
+[dependency-groups]
+dev = [
+    "autoflake==2.3.1",
+    "debugpy==1.8.12",
+    "pytest==8.2.2",
+    "pytest-cov==5.0.0",
+    "ruff==0.11.10",
+]
+
+[tool.ruff]
+line-length = 120
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/iceberg_mcp_server/__init__.py"
+
+[project.scripts]
+run-server = "iceberg_mcp_server.server:main"

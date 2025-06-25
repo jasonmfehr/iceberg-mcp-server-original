@@ -8,16 +8,17 @@ This is a A Model Context Protocol server that provides read-only access to Iceb
 ## Usage with Claude Desktop
 
 To use this server with the Claude Desktop app, add the following configuration to the "mcpServers" section of your `claude_desktop_config.json`:
+
+### Option 1: Direct installation from GitHub (Recommended)
 ```json
 {
   "mcpServers": {
     "iceberg-mcp-server": {
-      "command": "uv",
+      "command": "uvx",
       "args": [
-        "--directory",
-        "/path/to/iceberg-mcp-server",
-        "run",
-        "server.py"
+        "--from",
+        "git+https://github.com/cloudera/iceberg-mcp-server@main",
+        "run-server"
       ],
       "env": {
         "IMPALA_HOST": "coordinator-default-impala.example.com",
@@ -31,7 +32,31 @@ To use this server with the Claude Desktop app, add the following configuration 
 }
 ```
 
-Replace `/path/to` with your path to this repository and set the environment variables.
+### Option 2: Local installation (after cloning the repository)
+```json
+{
+  "mcpServers": {
+    "iceberg-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/iceberg-mcp-server",
+        "run",
+        "src/iceberg_mcp_server/server.py"
+      ],
+      "env": {
+        "IMPALA_HOST": "coordinator-default-impala.example.com",
+        "IMPALA_PORT": "443",
+        "IMPALA_USER": "username",
+        "IMPALA_PASSWORD": "password",
+        "IMPALA_DATABASE": "default"
+      }
+    }
+  }
+}
+```
+
+For Option 2, replace `/path/to` with your path to this repository. Set the environment variables according to your Impala configuration.
 
 ## Usage with AI frameworks
 

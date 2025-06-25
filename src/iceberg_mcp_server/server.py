@@ -10,11 +10,13 @@
 
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from tools import impala_tools
+from iceberg_mcp_server.tools import impala_tools
 
 mcp = FastMCP(name="Cloudera Iceberg MCP Server via Impala")
+
 
 # Register functions as MCP tools
 @mcp.tool()
@@ -24,6 +26,7 @@ def execute_query(query: str) -> str:
     """
     return impala_tools.execute_query(query)
 
+
 @mcp.tool()
 def get_schema() -> str:
     """
@@ -31,6 +34,11 @@ def get_schema() -> str:
     """
     return impala_tools.get_schema()
 
+
+def main():
+    print("Starting Iceberg MCP Server via Impala")
+    mcp.run(transport="stdio")
+
+
 if __name__ == "__main__":
-    # Initialize and run the server
-    mcp.run(transport='stdio')
+    main()
