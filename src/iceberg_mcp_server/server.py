@@ -8,7 +8,7 @@
 ## OF ANY KIND, either express or implied. Refer to the License for the specific
 ## permissions and limitations governing your use of the file.
 
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from dotenv import load_dotenv
 
 load_dotenv()
