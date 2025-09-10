@@ -17,13 +17,29 @@ from impala.dbapi import connect
 def get_db_connection():
     host = os.getenv("IMPALA_HOST", "coordinator-default-impala.example.com")
     port = int(os.getenv("IMPALA_PORT", "443"))
-    user = os.getenv("IMPALA_USER", "username")
-    password = os.getenv("IMPALA_PASSWORD", "password")
+    user = os.getenv("IMPALA_USER", "")
+    password = os.getenv("IMPALA_PASSWORD", "")
     database = os.getenv("IMPALA_DATABASE", "default")
     auth_mechanism = os.getenv("IMPALA_AUTH_MECHANISM", "LDAP")
     use_http_transport = os.getenv("IMPALA_USE_HTTP_TRANSPORT", "true")
     http_path = os.getenv("IMPALA_HTTP_PATH", "cliservice")
     use_ssl = os.getenv("IMPALA_USE_SSL", "true")
+
+    if use_http_transport.lower() == "true":
+        use_http_transport = True
+    else:
+        use_http_transport = False
+
+    if use_ssl.lower() == "true":
+        use_ssl = True
+    else:
+        use_ssl = False
+
+    if user == "":
+        user = None
+
+    if password == "":
+        password = None
 
     return connect(
         host=host,
