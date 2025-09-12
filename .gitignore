@@ -11,3 +11,6 @@ wheels/
 
 # Environment variables
 .env
+
+iceberg_mcp_server.log
+
