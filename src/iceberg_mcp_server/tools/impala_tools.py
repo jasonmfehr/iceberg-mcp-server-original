@@ -9,9 +9,12 @@
 ## permissions and limitations governing your use of the file.
 
 import json
+import logging
 import os
 from impala.dbapi import connect
 
+conn = None
+logger = logging.getLogger("iceberg-mcp-server")
 
 # Helper to get Impala connection details from env vars
 def get_db_connection():
@@ -35,6 +38,9 @@ def get_db_connection():
     else:
         use_ssl = False
 
+    logger.debug(f"Establishing new Impala connection to {host}:{port}, user={user}, "
+        f"db={database}, auth={auth_mechanism}, http={use_http_transport}, ssl={use_ssl}")
+
     if user == "":
         user = None
 
@@ -46,7 +52,6 @@ def get_db_connection():
         port=port,
         user=user,
         password=password,
-        database=database,
         auth_mechanism=auth_mechanism,
         use_http_transport=use_http_transport,
         http_path=http_path,
@@ -54,19 +59,65 @@ def get_db_connection():
     )
 
 
+def close_conn():
+    global conn
+    if conn is not None:
+        logger.debug("Closing Impala connection")
+        try:
+            conn.close()
+        except Exception as e:
+            logger.error(f"Error closing connection: {e}")
+        finally:
+          conn = None
+    else:
+        logger.debug("No Impala connection to close")
+
+
+def switch_db(db_name: str) -> str:
+    global conn
+
+    logger.debug(f"Enter switch_db - Switching to database: '{db_name}'")
+
+    if conn is None:
+        try:
+            conn = get_db_connection()
+        except Exception as e:
+            return f"Error: {str(e)}"
+    else:
+        conn.default_db = db_name
+
+    try:
+        cur = conn.cursor()
+        cur.execute(f"use {db_name}")
+        cur.close()
+        return f"Switched to database {db_name}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+    finally:
+        logger.debug(f"Exit switch_db")
+
+
 def execute_query(query: str) -> str:
-    conn = None
+    global conn
+
+    logger.debug(f"Enter execute_query - Received query: {query}")
 
     # Implement rudimentary SQL injection prevention
     # In this case, we only allow read-only queries
     # This is a very basic check and should be improved for production use
-    readonly_prefixes = ["select", "show", "describe", "with"]
+    readonly_prefixes = ["select", "show", "describe", "with", "use", "set"]
 
     if not query.strip().lower().split()[0] in readonly_prefixes:
         return "Only read-only queries are allowed."
 
+    if conn is None:
+        try:
+            conn = get_db_connection()
+        except Exception as e:
+            logger.debug(f"Exit execute_query - Failed to establish connection")
+            return f"Error: {str(e)}"
+
     try:
-        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(query)
         if cur.description:
@@ -80,14 +131,21 @@ def execute_query(query: str) -> str:
     except Exception as e:
         return f"Error: {str(e)}"
     finally:
-        if conn:
-            conn.close()
+        logger.debug(f"Exit execute_query")
 
 
 def get_schema() -> str:
-    conn = None
+    global conn
+
+    logger.debug(f"Enter get_schema")
+    if conn is None:
+        try:
+            conn = get_db_connection()
+        except Exception as e:
+            logger.debug(f"Exit get_schema - Failed to establish connection")
+            return f"Error: {str(e)}"
+
     try:
-        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SHOW TABLES")
         tables = cur.fetchall()
@@ -96,5 +154,4 @@ def get_schema() -> str:
     except Exception as e:
         return f"Error: {str(e)}"
     finally:
-        if conn:
-            conn.close()
+        logger.debug(f"Exit get_schema")

@@ -12,12 +12,17 @@ import os
 import logging
 from pathlib import Path
 from fastmcp import FastMCP
-from fastmcp.tools import Tool
 from dotenv import load_dotenv
 
-load_dotenv()
+from iceberg_mcp_server.mcp.tools.database import (
+    build_get_schema_tool,
+    build_use_db_tool
+)
+from iceberg_mcp_server.tools.query import build_execute_query_tool
+from iceberg_mcp_server.tools.impala_tools import close_conn
 
-from iceberg_mcp_server.tools import impala_tools
+
+load_dotenv()
 
 # Set up logging
 log_dir = Path(os.getenv("LOG_DIR", "/tmp/iceberg-mcp-server"))
@@ -30,56 +35,21 @@ log_level = getattr(logging, log_level_name.upper(), logging.INFO)
 logging.basicConfig(
     filename=str(log_file),
     level=log_level,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S.%f"
+    format="%(asctime)s [%(levelname)s] %(name)s:%(module)s/%(filename)s:%(lineno)d: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 
+# Set specific log levels for impala loggers.
+impala_log_level_name = os.getenv("IMPALA_LOG_LEVEL", "INFO")
+impala_log_level = getattr(logging, impala_log_level_name.upper(), logging.INFO)
+logging.getLogger("impala").setLevel(logging.INFO)
+
+# Set specific log levels for FastMCP loggers.
+mcp_log_level_name = os.getenv("MCP_LOG_LEVEL", "INFO")
+mcp_log_level = getattr(logging, mcp_log_level_name.upper(), logging.INFO)
+logging.getLogger("mcp").setLevel(logging.INFO)
+
 logger = logging.getLogger("iceberg-mcp-server")
-
-# Register functions as MCP tools
-# @mcp.tool()
-def execute_query(query: str) -> str:
-    """
-    Execute a SQL query on the Impala database and return results as JSON.
-    """
-    logger.info(f"Executing query: {query}")
-    try:
-        result = impala_tools.execute_query(query)
-        logger.debug(f"Query result: {result[:100]}...")
-        return result
-    except Exception as e:
-        logger.error(f"Error executing query: {e}")
-        raise
-
-def build_execute_query_tool() -> Tool:
-    logger.debug("Building execute_query tool")
-    return Tool.from_function(
-    fn=execute_query,
-    name="execute_query",
-    description="Execute a SQL query on the Impala database and return results as JSON.",
-    )
-
-# @mcp.tool()
-def get_schema() -> str:
-    """
-    Retrieve the list of table names in the current Impala database.
-    """
-    logger.info("Getting schema information")
-    try:
-        result = impala_tools.get_schema()
-        logger.debug(f"Schema result: {result[:100]}...")
-        return result
-    except Exception as e:
-        logger.error(f"Error getting schema: {e}")
-        raise
-
-def build_get_schema_tool() -> Tool:
-    logger.debug("Building get_schema tool")
-    return Tool.from_function(
-        fn=get_schema,
-        name="get_schema",
-        description="Retrieve the list of table names in the current Impala database.",
-    )
 
 
 def main():
@@ -87,7 +57,10 @@ def main():
     logger.info(f"Starting Iceberg MCP Server via transport: {transport}")
     mcp = FastMCP(
         name="Cloudera Iceberg MCP Server via Impala",
-        tools=[build_execute_query_tool(), build_get_schema_tool()]
+        tools=[
+            build_execute_query_tool(),
+            build_get_schema_tool(),
+            build_use_db_tool()]
     )
 
     try:
@@ -99,3 +72,5 @@ def main():
 if __name__ == "__main__":
     logger.info("Initializing Iceberg MCP Server")
     main()
+    close_conn()
+    logger.info("Shutting down Iceberg MCP Server")
