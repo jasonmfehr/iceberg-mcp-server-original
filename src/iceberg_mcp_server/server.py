@@ -16,52 +16,63 @@ from dotenv import load_dotenv
 
 from iceberg_mcp_server.mcp.tools.database import (
     build_get_schema_tool,
-    build_use_db_tool
+    build_use_db_tool,
+    build_list_dbs_tool,
+    build_resource_describe_db
 )
+
 from iceberg_mcp_server.tools.query import build_execute_query_tool
 from iceberg_mcp_server.tools.impala_tools import close_conn
 
 
 load_dotenv()
 
-# Set up logging
-log_dir = Path(os.getenv("LOG_DIR", "/tmp/iceberg-mcp-server"))
-log_dir.mkdir(exist_ok=True)
-log_file = log_dir / "iceberg_mcp_server.log"
+def setup_logging():
+    log_dir = Path(os.getenv("LOG_DIR", "/tmp/iceberg-mcp-server"))
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / "iceberg_mcp_server.log"
 
-log_level_name = os.getenv("LOG_LEVEL", "INFO")
-log_level = getattr(logging, log_level_name.upper(), logging.INFO)
+    log_level_name = os.getenv("LOG_LEVEL", "INFO")
+    log_level = getattr(logging, log_level_name.upper(), logging.INFO)
 
-logging.basicConfig(
-    filename=str(log_file),
-    level=log_level,
-    format="%(asctime)s [%(levelname)s] %(name)s:%(module)s/%(filename)s:%(lineno)d: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
+    logging.basicConfig(
+        filename=str(log_file),
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s:%(module)s/%(filename)s:%(lineno)d: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-# Set specific log levels for impala loggers.
-impala_log_level_name = os.getenv("IMPALA_LOG_LEVEL", "INFO")
-impala_log_level = getattr(logging, impala_log_level_name.upper(), logging.INFO)
-logging.getLogger("impala").setLevel(logging.INFO)
+    # Set specific log levels for impala loggers.
+    impala_log_level_name = os.getenv("IMPALA_LOG_LEVEL", "INFO")
+    impala_log_level = getattr(logging, impala_log_level_name.upper(), logging.INFO)
+    logging.getLogger("impala").setLevel(logging.INFO)
 
-# Set specific log levels for FastMCP loggers.
-mcp_log_level_name = os.getenv("MCP_LOG_LEVEL", "INFO")
-mcp_log_level = getattr(logging, mcp_log_level_name.upper(), logging.INFO)
-logging.getLogger("mcp").setLevel(logging.INFO)
+    # Set specific log levels for FastMCP loggers.
+    mcp_log_level_name = os.getenv("MCP_LOG_LEVEL", "INFO")
+    mcp_log_level = getattr(logging, mcp_log_level_name.upper(), logging.INFO)
+    logging.getLogger("mcp").setLevel(mcp_log_level)
 
 logger = logging.getLogger("iceberg-mcp-server")
 
 
-def main():
-    transport = os.getenv("MCP_TRANSPORT", "stdio")
-    logger.info(f"Starting Iceberg MCP Server via transport: {transport}")
+def build_mcp_server() -> FastMCP:
     mcp = FastMCP(
         name="Cloudera Iceberg MCP Server via Impala",
         tools=[
             build_execute_query_tool(),
             build_get_schema_tool(),
-            build_use_db_tool()]
+            build_use_db_tool(),
+            build_list_dbs_tool(),]
     )
+
+    mcp.add_resource(build_resource_describe_db())
+    return mcp
+
+def main():
+    setup_logging()
+    transport = os.getenv("MCP_TRANSPORT", "stdio")
+    logger.info(f"Starting Iceberg MCP Server via transport: {transport}")
+    mcp = build_mcp_server()
 
     try:
         mcp.run(transport=transport)

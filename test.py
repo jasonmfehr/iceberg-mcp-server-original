@@ -36,12 +36,21 @@ os.environ["IMPALA_HOST"] = "localhost"
 os.environ["IMPALA_PORT"] = "28000"
 os.environ["IMPALA_AUTH_MECHANISM"] = "NOSASL"
 os.environ["IMPALA_USE_SSL"] = "false"
-client = Client(server.mcp)
+os.environ["LOG_DIR"] = os.path.dirname(os.path.abspath(__file__))
+os.environ["LOG_LEVEL"] = "DEBUG"
+os.environ["IMPALA_LOG_LEVEL"] = "INFO"
+os.environ["MCP_LOG_LEVEL"] = "DEBUG"
+
+server.setup_logging()
+mcp = server.build_mcp_server()
+client = Client(mcp)
 
 async def main():
   async with client:
     await client.ping()
-    result = await client.call_tool("get_schema")
-  print(result)
+
+    # Now try to read the resource
+    result = await client.read_resource("database://functional")
+    print(result)
 
 asyncio.run(main())

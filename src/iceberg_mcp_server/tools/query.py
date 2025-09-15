@@ -8,6 +8,7 @@
 ## OF ANY KIND, either express or implied. Refer to the License for the specific
 ## permissions and limitations governing your use of the file.
 
+import json
 import logging
 
 from fastmcp.tools import Tool
@@ -22,7 +23,7 @@ def execute_query(query: str) -> str:
     """
     logger.info(f"Executing query: {query}")
     try:
-        result = impala_tools.execute_query(query)
+        result = json.dumps(impala_tools.execute_query(query), default=str)
         logger.debug(f"Query result: {result[:100]}...")
         return result
     except Exception as e:

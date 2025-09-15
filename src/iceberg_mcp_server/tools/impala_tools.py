@@ -97,7 +97,7 @@ def switch_db(db_name: str) -> str:
         logger.debug(f"Exit switch_db")
 
 
-def execute_query(query: str) -> str:
+def execute_query(query: str) -> list:
     global conn
 
     logger.debug(f"Enter execute_query - Received query: {query}")
@@ -121,8 +121,7 @@ def execute_query(query: str) -> str:
         cur = conn.cursor()
         cur.execute(query)
         if cur.description:
-            rows = cur.fetchall()
-            result = json.dumps(rows, default=str)
+            return cur.fetchall()
         else:
             conn.commit()
             result = "Query executed successfully."
@@ -155,3 +154,26 @@ def get_schema() -> str:
         return f"Error: {str(e)}"
     finally:
         logger.debug(f"Exit get_schema")
+
+
+def list_dbs() -> list[str]:
+    global conn
+
+    logger.debug(f"Enter list_dbs")
+    if conn is None:
+        try:
+            conn = get_db_connection()
+        except Exception as e:
+            logger.debug(f"Exit list_dbs - Failed to establish connection")
+            return [f"Error: {str(e)}"]
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SHOW DATABASES")
+        dbs = cur.fetchall()
+        db_list = [db[0] for db in dbs]
+        return db_list
+    except Exception as e:
+        return [f"Error: {str(e)}"]
+    finally:
+        logger.debug(f"Exit list_dbs")
